@@ -1,31 +1,26 @@
-#include "DrawLinePanel.h"
+ï»¿#include "DrawLinePanel.h"
+#include "GUI/global.h"
+#include <vector>
+#include <QDebug>
 #include <QPainter>
+#include <QMouseEvent>
+#include <QDebug>
+using namespace std;
+
+
 
 DrawLinePanel::DrawLinePanel()
 {
-	drawWidget.setupUi(this);	
-	
-	//resize(200, 200);    //´°¿Ú´óĞ¡ÉèÖÃ   //.................£¨8-10ĞĞÓë59-63ĞĞÎªÒ»×é£©
-	pix = QPixmap(200, 200);//»­²¼´óĞ¡ÉèÖÃ£¬±³¾°°×É«
-	pix.fill(Qt::white);
-	
-	/*connect(drawButton, &QPushButton::clicked, this, &DrawLinePanel::paintEvent);
-	connect(clearButton, &QPushButton::clicked, this, &DrawLinePanel::clearPaint);*/
+	drawWidget.setupUi(this);
+	//resize(200, 200);    //çª—å£å¤§å°è®¾ç½®
+	pix = QPixmap(width(), height());//ç”»å¸ƒå¤§å°è®¾ç½®ï¼ŒèƒŒæ™¯ä¸ºé€æ˜è‰²
+	pix.fill(Qt::transparent);		
 }
-
-
-
 void DrawLinePanel::setActiveScene(Scene * scene)
 {
 	if (activeScene != scene)
 		activeScene = scene;
 }
-
-DrawLinePanel::~DrawLinePanel()
-{
-	
-}
-
 QSegMesh* DrawLinePanel::activeObject()
 {
 	if (activeScene)
@@ -34,135 +29,80 @@ QSegMesh* DrawLinePanel::activeObject()
 		return NULL;
 }
 
-
-//void DrawLinePanel::paintEvent(QPaintEvent *)
-//{
-//
-//	QPainter painter(this);
-//	painter.setRenderHint(QPainter::Antialiasing);
-//	painter.translate(40, 40);// °Ñ×ø±êÔ­µãÒÆ¶¯µ½(0,0)
-//
-//	static const QPointF points[5] = {
-//		QPointF(20.0, 70.0),
-//		QPointF(90.0, 20.0),
-//		QPointF(160.0, 70.0),
-//		QPointF(125.0, 130.0),
-//		QPointF(55.0, 130.0)
-//		};
-//
-//		painter.drawPolygon(points, 5);	
-//	
-//
-//}
-
-
+//paintEventå‡½æ•°ä¸éœ€è¦æ‰‹åŠ¨è°ƒç”¨ï¼Œç³»ç»Ÿä¼šè‡ªåŠ¨è°ƒç”¨
 void DrawLinePanel::paintEvent(QPaintEvent *)
 {
+	QPainter painter(this);//å¾€thisä¸Šç”»ï¼Œå³DrawLinePanelï¼Œpainteræ˜¯ç½‘æ ¼		 
+			
+	painter.drawPixmap(0, 0, pix);//åœ¨(0,0)å¤„ç»˜åˆ¶ç”»å¸ƒ	
+	painter.setRenderHint(QPainter::Antialiasing,true);
+	painter.setWindow(-0.5*width(), -0.5*height(), width(), height());//painterçš„é€»è¾‘ç»˜å›¾åŒºåŸŸï¼Œå·¦ä¸Šè§’ä¸º(-0.5*width(),-0.5*height())ï¼Œå³ä¸‹è§’ä¸º(width(), height())
+	//painter.drawPoint(QPointF(0, 0));//ç”»å‡ºåæ ‡åŸç‚¹ï¼ˆ0,0ï¼‰ä½ç½®
+	//è¾“å…¥é™ç»´åçš„äº”ä¸ªç‚¹ï¼Œç”Ÿæˆçš„ä¸‰è§’å‰–åˆ†åçš„æ¯ä¸ªä¸‰è§’å½¢
+	extern vector<vector<vector<float>>> d_triangles;
+	double multiple = 0.5* height();
+	for (int index=0; index < d_triangles.size(); index++)
+	{
+		float x1 = d_triangles[index][0][0] * multiple; float y1 = -(d_triangles[index][0][1] * multiple) ;
+		float x2 = d_triangles[index][1][0] * multiple; float y2 = -(d_triangles[index][1][1] * multiple);
+		float x3 = d_triangles[index][2][0] * multiple; float y3 = -(d_triangles[index][2][1] * multiple);
+		QPointF points[3] = {
+			QPointF(x1 , y1),
+			QPointF(x2 , y2),
+			QPointF(x3 , y3),
+		};
+		painter.drawPolygon(points, 3);
+		//ç»†åˆ†ä¸‰è§’å‰–åˆ†åçš„æ¯ä¸ªä¸‰è§’å½¢
+		double x11 = x1 + (x2 - x1)*0.25 * 1, y11 = y1 + (y2 - y1)*0.25 * 1, x12 = x1 + (x2 - x1)*0.25 * 2, y12 = y1 + (y2 - y1)*0.25 * 2, x13 = x1 + (x2 - x1)*0.25 * 3, y13 = y1 + (y2 - y1)*0.25 * 3;
+		double x21 = x2 + (x3 - x2)*0.25 * 1, y21 = y2 + (y3 - y2)*0.25 * 1, x22 = x2 + (x3 - x2)*0.25 * 2, y22 = y2 + (y3 - y2)*0.25 * 2, x23 = x2 + (x3 - x2)*0.25 * 3, y23 = y2 + (y3 - y2)*0.25 * 3;
+		double x31 = x3 + (x1 - x3)*0.25 * 1, y31 = y3 + (y1 - y3)*0.25 * 1, x32 = x3 + (x1 - x3)*0.25 * 2, y32 = y3 + (y1 - y3)*0.25 * 2, x33 = x3 + (x1 - x3)*0.25 * 3, y33 = y3 + (y1 - y3)*0.25 * 3;		
+		painter.drawLine(QPointF(x11, y11), QPointF(x23, y23));
+		painter.drawLine(QPointF(x12, y12), QPointF(x22, y22));
+		painter.drawLine(QPointF(x13, y13), QPointF(x21, y21));
 
-	QPainter painter(this);
+		painter.drawLine(QPointF(x11, y11), QPointF(x33, y33));
+		painter.drawLine(QPointF(x12, y12), QPointF(x32, y32));
+		painter.drawLine(QPointF(x13, y13), QPointF(x31, y31));
+
+		painter.drawLine(QPointF(x23, y23), QPointF(x31, y31));
+		painter.drawLine(QPointF(x22, y22), QPointF(x32, y32));
+		painter.drawLine(QPointF(x21, y21), QPointF(x33, y33));
+	}		
 	
-
-	QPainter pp(&pix);    // ¸ù¾İÊó±êÖ¸ÕëÇ°ºóÁ½¸öÎ»ÖÃ»æÖÆÖ±Ïß   //.................£¨8-10ĞĞÓë59-63ĞĞÎªÒ»×é£©
-	pp.drawLine(lastPoint, endPoint);    // ÈÃÇ°Ò»¸ö×ø±êÖµµÈÓÚºóÒ»¸ö×ø±êÖµ£¬ÕâÑù¾ÍÄÜÊµÏÖ»­³öÁ¬ĞøµÄÏß    
+	QPainter pp(&pix);    //å¾€ç”»å¸ƒä¸Šç”»ï¼Œppæ˜¯ç”»çš„çº¿ï¼Œ æ ¹æ®é¼ æ ‡æŒ‡é’ˆå‰åä¸¤ä¸ªä½ç½®ç»˜åˆ¶ç›´çº¿   
+	pp.setRenderHint(QPainter::Antialiasing, true);
+	pp.setPen(QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap));
+	pp.drawLine(lastPoint, endPoint);    // è®©å‰ä¸€ä¸ªåæ ‡å€¼ç­‰äºåä¸€ä¸ªåæ ‡å€¼ï¼Œè¿™æ ·å°±èƒ½å®ç°ç”»å‡ºè¿ç»­çš„çº¿  
 	lastPoint = endPoint;	
-	painter.drawPixmap(0, 0, pix);//ÔÚ(0,0)´¦»æÖÆ»­²¼
-	
-	painter.setRenderHint(QPainter::Antialiasing);
-	painter.translate(0, 0);// °Ñ×ø±êÔ­µãÒÆ¶¯µ½(0,0)
-	//painter.drawPoint(QPointF(0, 0));//»­³ö£¨0,0£©Î»ÖÃ	
-
-	float x1 = 50.0, y1 = 90.0;
-	float x2 = 185.0, y2 = 60.0;
-	float x3 = 220.0, y3 = 110.0;
-	float x4 = 195.0, y4 = 150.0;
-	float x5 = 145.0, y5 = 160.0;
-	static const QPointF points[5] = {
-		QPointF(x1, y1),
-		QPointF(x2, y2),
-		QPointF(x3, y3),
-		QPointF(x4, y4),
-		QPointF(x5, y5)
-	};
-	painter.drawPolygon(points, 5);	
-
-	//»­Ï¸·ÖÏß
-	double x11 = x1 + (x2 - x1)*0.25 * 1, y11 = y1 + (y2 - y1)*0.25 * 1, x12 = x1 + (x2 - x1)*0.25 * 2, y12 = y1 + (y2 - y1)*0.25 * 2, x13 = x1 + (x2 - x1)*0.25 * 3, y13 = y1 + (y2 - y1)*0.25 * 3;
-	double x21 = x2 + (x3 - x2)*0.25 * 1, y21 = y2 + (y3 - y2)*0.25 * 1, x22 = x2 + (x3 - x2)*0.25 * 2, y22 = y2 + (y3 - y2)*0.25 * 2, x23 = x2 + (x3 - x2)*0.25 * 3, y23 = y2 + (y3 - y2)*0.25 * 3;
-	double x31 = x3 + (x4 - x3)*0.25 * 1, y31 = y3 + (y4 - y3)*0.25 * 1, x32 = x3 + (x4 - x3)*0.25 * 2, y32 = y3 + (y4 - y3)*0.25 * 2, x33 = x3 + (x4 - x3)*0.25 * 3, y33 = y3 + (y4 - y3)*0.25 * 3;
-	double x41 = x4 + (x5 - x4)*0.25 * 1, y41 = y4 + (y5 - y4)*0.25 * 1, x42 = x4 + (x5 - x4)*0.25 * 2, y42 = y4 + (y5 - y4)*0.25 * 2, x43 = x4 + (x5 - x4)*0.25 * 3, y43 = y4 + (y5 - y4)*0.25 * 3;;
-	double x51 = x5 + (x1 - x5)*0.25 * 1, y51 = y5 + (y1 - y5)*0.25 * 1, x52 = x5 + (x1 - x5)*0.25 * 2, y52 = y5 + (y1 - y5)*0.25 * 2, x53 = x5 + (x1 - x5)*0.25 * 3, y53 = y5 + (y1 - y5)*0.25 * 3;
-	double x61 = x5 + (x2 - x5)*0.25 * 1, y61 = y5 + (y2 - y5)*0.25 * 1, x62 = x5 + (x2 - x5)*0.25 * 2, y62 = y5 + (y2 - y5)*0.25 * 2, x63 = x5 + (x2 - x5)*0.25 * 3, y63 = y5 + (y2 - y5)*0.25 * 3;
-	double x71 = x5 + (x3 - x5)*0.25 * 1, y71 = y5 + (y3 - y5)*0.25 * 1, x72 = x5 + (x3 - x5)*0.25 * 2, y72 = y5 + (y3 - y5)*0.25 * 2, x73 = x5 + (x3 - x5)*0.25 * 3, y73 = y5 + (y3 - y5)*0.25 * 3;
-	
-	painter.drawLine(QPointF(x5, y5), QPointF(x2, y2));
-	painter.drawLine(QPointF(x5, y5), QPointF(x3, y3));
-
-	painter.drawLine(QPointF(x11, y11), QPointF(x61, y61));
-	painter.drawLine(QPointF(x12, y12), QPointF(x62, y62));
-	painter.drawLine(QPointF(x13, y13), QPointF(x63, y63));
-	painter.drawLine(QPointF(x51, y51), QPointF(x13, y13));
-	painter.drawLine(QPointF(x52, y52), QPointF(x12, y12));
-	painter.drawLine(QPointF(x53, y53), QPointF(x11, y11));
-	painter.drawLine(QPointF(x53, y53), QPointF(x63, y63));
-	painter.drawLine(QPointF(x52, y52), QPointF(x62, y62));
-	painter.drawLine(QPointF(x51, y51), QPointF(x61, y61));
-	
-	
-	painter.drawLine(QPointF(x23, y23), QPointF(x61, y61));
-	painter.drawLine(QPointF(x22, y22), QPointF(x62, y62));
-	painter.drawLine(QPointF(x21, y21), QPointF(x63, y63));
-	painter.drawLine(QPointF(x71, y71), QPointF(x21, y21));
-	painter.drawLine(QPointF(x72, y72), QPointF(x22, y22));
-	painter.drawLine(QPointF(x73, y73), QPointF(x23, y23));
-	painter.drawLine(QPointF(x73, y73), QPointF(x63, y63));
-	painter.drawLine(QPointF(x72, y72), QPointF(x62, y62));
-	painter.drawLine(QPointF(x71, y71), QPointF(x61, y61));
-	
-	
-	painter.drawLine(QPointF(x33, y33), QPointF(x71, y71));
-	painter.drawLine(QPointF(x32, y32), QPointF(x72, y72));
-	painter.drawLine(QPointF(x31, y31), QPointF(x73, y73));
-	painter.drawLine(QPointF(x41, y41), QPointF(x73, y73)); 
-	painter.drawLine(QPointF(x42, y42), QPointF(x72, y72)); 
-	painter.drawLine(QPointF(x43, y43), QPointF(x71, y71));
-	painter.drawLine(QPointF(x43, y43), QPointF(x31, y31));
-	painter.drawLine(QPointF(x42, y42), QPointF(x32, y32));
-	painter.drawLine(QPointF(x41, y41), QPointF(x33, y33));
-	
-	
-	
 }
 
 void DrawLinePanel::mousePressEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::LeftButton) //Êó±ê×ó¼ü°´ÏÂ       
-		lastPoint = event->pos();
+	qDebug() << event->pos();
+	if (event->button() == Qt::LeftButton) //é¼ æ ‡å·¦é”®æŒ‰ä¸‹       
+		lastPoint = event->pos();	
 }
 
 void DrawLinePanel::mouseMoveEvent(QMouseEvent *event)
 {
-	if (event->buttons()&Qt::LeftButton) //Êó±ê×ó¼ü°´ÏÂµÄÍ¬Ê±ÒÆ¶¯Êó±ê    
+	qDebug() << event->pos();
+	if (event->buttons()&Qt::LeftButton) //é¼ æ ‡å·¦é”®æŒ‰ä¸‹çš„åŒæ—¶ç§»åŠ¨é¼ æ ‡    
 	{
 		endPoint = event->pos();
-		update(); //Ö´ĞĞpainterEventº¯Êı½øĞĞÖØ»æ
+		update(); //æ‰§è¡ŒpainterEventå‡½æ•°è¿›è¡Œé‡ç»˜
 	}
 }
 
 void DrawLinePanel::mouseReleaseEvent(QMouseEvent *event)
 {
-	if (event->button() == Qt::LeftButton) //Êó±ê×ó¼üÊÍ·Å    
+	if (event->button() == Qt::LeftButton) //é¼ æ ‡å·¦é”®é‡Šæ”¾    
 	{
 		endPoint = event->pos();
 		update();
 	}
 }
 
-void DrawLinePanel::clearPaint()
-{
-	
-	
-	
-}
+
 
 
 

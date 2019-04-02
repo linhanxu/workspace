@@ -1,9 +1,6 @@
 #pragma once
 
 #include <QWidget>
-#ifndef DrawLinePanel_H
-#define DrawLinePanel_H
-
 #include "GUI/Scene.h"
 #include "ui_DrawLineWidget.h"
 #include <QDialog>
@@ -19,8 +16,6 @@ class DrawLinePanel : public QWidget
 
 public:
 	DrawLinePanel();	
-	~DrawLinePanel();
-
 
 	Ui::DrawLineWidget drawWidget;
 
@@ -40,17 +35,14 @@ protected:
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
-	void clearPaint();
+	
 
 	
 
 private:
 	QPixmap pix;
 	QPoint lastPoint;
-	QPoint endPoint;
-	QPushButton *drawButton;
-	QPushButton *clearButton;
+	QPoint endPoint;	
+	
 };
-
-#endif // DrawLinePanel_H
 

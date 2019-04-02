@@ -102,7 +102,7 @@
       <IgnoreImportLibrary>true</IgnoreImportLibrary>
       <OutputFile>$(OutDir)\Workspace.exe</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
     <Midl>
@@ -169,7 +169,7 @@
       <LinkIncremental>false</LinkIncremental>
       <OutputFile>$(OutDir)\Workspace.exe</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
     <Midl>
@@ -247,6 +247,11 @@
       <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;_ENABLE_EXTENDED_ALIGNED_STORAGE;WIN64;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_XML_LIB;QT_CORE_LIB;NDEBUG;_USE_MATH_DEFINES</Define>
     </QtMoc>
     <ClInclude Include="MathLibrary\Bounding\BoundingBox.h" />
+    <ClInclude Include="MathLibrary\d_delaunay.h" />
+    <ClInclude Include="MathLibrary\d_edge.h" />
+    <ClInclude Include="MathLibrary\d_numeric.h" />
+    <ClInclude Include="MathLibrary\d_triangle.h" />
+    <ClInclude Include="MathLibrary\d_vector2.h" />
     <ClInclude Include="MathLibrary\functions.h" />
     <ClInclude Include="Utility\ColorMap.h" />
     <ClInclude Include="GraphicsLibrary\Sampling\EdgeSampler.h" />

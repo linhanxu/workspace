@@ -1,5 +1,4 @@
 #pragma once
-
 #include "GraphicsLibrary/Mesh/QSegMesh.h"
 #include "GraphicsLibrary/Basic/Plane.h"
 

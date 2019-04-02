@@ -1,7 +1,9 @@
 #pragma once
 #include "MathLibrary/functions.h"
 #include <tapkee/tapkee.hpp>
-
+#include "MathLibrary/d_vector2.h"
+#include "MathLibrary/d_triangle.h"
+#include "MathLibrary/d_delaunay.h"
 #include "global.h"
 #include "Workspace.h"
 #include <QApplication>
@@ -9,16 +11,11 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-
-
 using namespace std;
 using namespace tapkee;
-
-//全局变量定义开始*********************************************************************************//
 typedef OpenMesh::TriMesh_ArrayKernelT<> PGMesh;
-static const char MODEL[] = "man";
+static const char MODEL[] = /*"body"*/"handstand"/*"man"*/;
 const int meshNum = 5;//已知的关键帧个数
-
 int nE_ = 0, nF_ = 0, nV_ = 0;//模型的边数、面数、顶点数
 double weights_0 = 0, weights_1 = 0, weights_2 = 0, weights_3 = 0, weights_4 = 0;//混合权重,大小为meshNum
 
@@ -27,14 +24,14 @@ Eigen::MatrixXd Dihs_key;//已知mesh的各条边各帧的二面角
 Eigen::MatrixXd Edgs_key;//已知mesh的各条边各帧的边长
 Eigen::MatrixXd FaceAreas_key;//已知mesh的各帧各个面的面积
 Eigen::MatrixXd Points_key;//已知mesh的各顶点各帧的三维坐标
-
 /*
 //int K = (meshNum - 1)*(n_ + 1);//P116页矩阵数组的大小,即共有0-K个mesh，即一共K+1个
 //Eigen::SparseMatrix<double> linSysMatrice(K + 1, K + 1);//P116页的矩阵
- */
-
+*/
+vector<vector<vector<float>>> d_triangles;
+vector<vector<float>> d_points;
 Eigen::MatrixXd DihEdg_blend;//线性混合已知mesh的各条边各帧的二面角和边长
- //全局变量定义结束*********************************************************************************//
+
 
 void getNum_EFV()
 {
@@ -49,7 +46,6 @@ void getNum_EFV()
 	nF_ = calcu->nF;
 	nV_ = calcu->nV;
 }
-
 void getDihEdgeArea()
 {
 	DihEdgs_key = Eigen::MatrixXd::Zero(2 * nE_, meshNum);
@@ -58,8 +54,8 @@ void getDihEdgeArea()
 	Edgs_key = Eigen::MatrixXd::Zero(nE_, meshNum);
 	FaceAreas_key = Eigen::MatrixXd::Zero(nF_, meshNum);
 
-	cout << "load mesh..." << endl;
-	cout << "calculate dihedral angle、edge length and face area..." << endl;
+	cout << "load mesh...\n";
+	cout << "calculate dihedral angle、edge length and face area...\n";
 
 	//存二面角和边长	
 	char *DihEdgDataPath = new char[100];
@@ -134,6 +130,7 @@ void getDihEdgeArea()
 //降维，2*nE_维到2维
 tapkee::DenseMatrix  dimReduction()
 {
+	cout << "dimensionality reduction...\n";
 	const int ROW = 2 * nE_;
 	//const int ROW = 3*nV_;
 	//const int ROW = nE_;
@@ -142,8 +139,8 @@ tapkee::DenseMatrix  dimReduction()
 
 	ifstream infile;
 	char *path = new char[100];
-	sprintf_s(path, 100, "Resources\\data\\%s_DihEdgs.txt", MODEL);
-	//sprintf_s(path, 100, "Resources\\data\\%s_Points.txt", MODEL);
+	//sprintf_s(path, 100, "Resources\\data\\%s_DihEdgs.txt", MODEL);
+	sprintf_s(path, 100, "Resources\\data\\%s_Points.txt", MODEL);
 	//sprintf_s(path, 100, "Resources\\data\\%s_Dih.txt", MODEL);
 	//sprintf_s(path, 100, "Resources\\data\\%s_Edg.txt", MODEL);
 	infile.open(path);
@@ -158,18 +155,17 @@ tapkee::DenseMatrix  dimReduction()
 
 	TapkeeOutput output = tapkee::initialize::initialize()
 		//.withParameters((method = KernelLocallyLinearEmbedding,
-		//.withParameters((method = KernelLocalTangentSpaceAlignment,
-		.withParameters((method = Isomap,
+		.withParameters((method = KernelLocalTangentSpaceAlignment,
+		//.withParameters((method = Isomap,
 			num_neighbors = 4,
 			target_dimension = 2))
 		.embedUsing(matrix_before_dimReduction);
 	return output.embedding.transpose();
 }
 
-int main(int argc, char *argv[])
+//三角剖分
+void d_delaunay()
 {
-	getNum_EFV();
-	getDihEdgeArea();
 	tapkee::DenseMatrix matrix_after_dimReduction = dimReduction();
 	//存降维后的坐标	
 	char *dimReductionPath = new char[100];
@@ -177,6 +173,60 @@ int main(int argc, char *argv[])
 	fstream opDE(dimReductionPath, ios::out);
 	opDE << matrix_after_dimReduction << endl;
 
+	std::cout << "delaunay triangulation...\n";
+	vector<Vector2<float> > points;
+	for (int i = 0; i < meshNum; i++) 
+	{
+		points.push_back(Vector2<float>(matrix_after_dimReduction(0, i), matrix_after_dimReduction(1, i)));
+		vector<float> tmp;
+		tmp.push_back(matrix_after_dimReduction(0, i));
+		tmp.push_back(matrix_after_dimReduction(1, i));
+		d_points.push_back(tmp);
+	}	
+	Delaunay<float> triangulation;
+	const std::vector<Triangle<float> > triangles = triangulation.triangulate(points);
+	std::cout << triangles.size() << "triangles generated\n";
+	for (int i = 0; i < triangles.size(); i++)
+	{
+		vector<vector<float>> tmp0;//一个三角形的三个点	
+		vector<float> tmp1, tmp2, tmp3;
+		tmp1.push_back(triangles[i].p1.x);tmp1.push_back(triangles[i].p1.y);
+		tmp2.push_back(triangles[i].p2.x);tmp2.push_back(triangles[i].p2.y);
+		tmp3.push_back(triangles[i].p3.x);tmp3.push_back(triangles[i].p3.y);
+		tmp0.push_back(tmp1);
+		tmp0.push_back(tmp2);
+		tmp0.push_back(tmp3);			
+		d_triangles.push_back(tmp0);
+	}
+	
+	const std::vector<Edge<float> > edges = triangulation.getEdges();
+	std::cout << " ========= ";
+
+	std::cout << "\nPoints : " << points.size() << std::endl;
+	for (const auto &p : triangles)  
+		std::cout << p << std::endl;
+
+	std::cout << "\nTriangles : " << triangles.size() << std::endl;
+	for (const auto &t : triangles)
+		std::cout << t << std::endl;
+
+	/*std::cout << "\nEdges : " << edges.size() << std::endl;
+	for (const auto &e : edges)
+		std::cout << e << std::endl;*/
+}
+
+int main(int argc, char *argv[])
+{
+	getNum_EFV();
+	getDihEdgeArea();
+	d_delaunay();
+
+	
+	
+	
+	
+	
+	
 	QApplication a(argc, argv);
 
 	DEFAULT_FILE_PATH = "G:/VS2015_projects/workspace/Resources/inMesh";
@@ -195,6 +245,9 @@ int main(int argc, char *argv[])
 
 
 	return a.exec();
+
+	getchar();
+	return 0;
 
 }
 

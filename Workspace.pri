@@ -48,7 +48,12 @@ HEADERS += ./MathLibrary/Bounding/BoundingBox.h \
     ./GUI/MeshBrowser/QuickMeshViewer.h \
     ./GUI/Scene.h \
     ./GUI/Tools/TransformationPanel.h \
-    ./GUI/Workspace.h
+    ./GUI/Workspace.h \
+    ./MathLibrary/d_delaunay.h \
+    ./MathLibrary/d_edge.h \
+    ./MathLibrary/d_numeric.h \
+    ./MathLibrary/d_vector2.h \
+    ./MathLibrary/d_triangle.h
 SOURCES += ./GUI/Tools/DrawLinePanel.cpp \
     ./MathLibrary/Bounding/BoundingBox.cpp \
     ./MathLibrary/functions.cpp \
